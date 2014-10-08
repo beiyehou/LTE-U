@@ -1,4 +1,4 @@
-function [  ] = main( )
+function [  ] = main( );sdfgu4h
 WiFi_num = 16;
 LTE_num = 16;
 Channel_num = 4;
