@@ -1,5 +1,5 @@
-function [Struct] = Set_Point(Struct, centerPoint ,area,start_id )
-% è¯¥å‡½æ•°å¤„ç†è¾“å…¥ç»“æ„ä½“æ•°ç»„çš„ Point å±æ€§å€¼
+function [Struct] = Set_Rnd_Point(Struct, centerPoint ,area,start_id )
+% ¸Ãº¯Êı´¦ÀíÊäÈë½á¹¹ÌåÊı×éµÄ Point ÊôĞÔÖµ
 
 if (~isstruct(Struct) || ~isstruct(area))
     error('The input data is not a struct,please check it !');
@@ -16,4 +16,3 @@ for i=1:length_struct
     Struct(i).point(1) = axis_x(i);
     Struct(i).point(2) = axis_y(i);
 end
-

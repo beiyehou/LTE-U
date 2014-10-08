@@ -1,73 +1,187 @@
-function [ out ] = LTE_U( Loop, WiFi_num, LTE_num, Channel_num )
-% LTE_U ä¸»å‡½æ•°
-% Loop æ€»çš„æ—¶é—´ç‰‡æ•°é‡ï¼Œä»¥ 15us ä¸ºä¸€ä¸ªæœ€å°æ—¶é—´å•ä½
-% WiFi_num WiFi èŠ‚ç‚¹çš„ä¸ªæ•°
-% LTE_num LTE èŠ‚ç‚¹çš„ä¸ªæ•°
+function [WiFi,LTE,UE ] = LTE_U(  Loop,WiFi_type ,WiFi_num,LTE_type ,LTE_num, Channel_num, UE_num ,View)
+% LTE_U Ö÷º¯Êı
+% Loop ×ÜµÄÊ±¼äÆ¬ÊıÁ¿£¬ÒÔ 15us ÎªÒ»¸ö×îĞ¡Ê±¼äµ¥Î»
+% WiFi_num WiFi ½ÚµãµÄ¸öÊı
+% LTE_num LTE ½ÚµãµÄ¸öÊı
 
-% å…¨å±€å˜é‡
-WiFi_Energy = 10;
-LTE_Energy = 15;
+% È«¾Ö±äÁ¿
+WiFi_Energy = 24;
+LTE_Energy = 30;
+WiFi_Rate = 54*10^6;
+deta_Time =8;
+% »æÍ¼ºÍÖ÷Ñ­»·Ê±¼ä¼ä¸ô
+View_deta = 5;
+Loop_slip = 0.0001;
 
-% WiFi å’Œ LTE ç»“æ„ä½“å®šä¹‰
+% WiFi ºÍ LTE ½á¹¹Ìå¶¨Òå
 
 WiFi = struct ( ...
 	'point',[0,0], ...
 	'distance', 0, ...
 	'energy', WiFi_Energy, ...
-	'id', cell(1,WiFi_num), ...
+	'id', num2cell(1:WiFi_num), ...
+    'UE_id',0, ...
+    'Channel_id',1, ...
 	'listen_enable', false, ...
 	'send_enable', false, ...
+    'total_date', [0 0 0], ...
+    'total_input',[0 0 0],...
     'packet_length', 0, ...
-	'nosie', 0, ...
-    'CCA',0.0,...
+    'packet_bit', 0 ,...
+	'noise', 0, ...
+    'LBT_enable', true , ...
+    'WiFi_LTE',true, ...
+    'CCA',0,...
     'detaT',0.0, ...
-	'waitQuene', [] ...
+	'waitQueue', [] ...
 	);
 
 LTE = struct(...
 	'point', [0,0], ...
 	'distance', 0, ...
 	'energy', LTE_Energy, ...
-	'id', cell(1,LTE_num), ...
+	'id', num2cell(1:LTE_num), ...
+    'UE_id',0, ...
+    'Channel_id',2, ...
 	'listen_enable', false , ...
 	'send_enable', false , ...
+    'total_date' ,[0 0 0], ...
+    'total_input',[0 0 0],...
     'packet_length', 0, ...
-	'nosie', 0 , ...
-    'CCA',0.0,...
+    'packet_bit',0,...
+	'noise', 0 , ...
+    'LBT_enable', true ,...
+    'WiFi_LTE',false,...
+    'CCA',0,...
     'detaT',0.0,...
-	'waitQuene', [] ... 
+	'waitQueue', [] ... 
 	);
-% å®šä¹‰ä¿¡é“ç»“æ„ä½“
+% ¶¨ÒåĞÅµÀ½á¹¹Ìå
 Channel = struct(...
     'busy_check',false, ...
-    'id', cell(1,Channel_num) ,...
-    'frequency',0.0 ...
+    'id', num2cell(1:Channel_num) ,...
+    'frequency',0.0, ...
+    'sendQueue', [] , ...
+    'crashQueue', [] ... 
     );
-% åˆå§‹åŒ– WiFi å’Œ LTE èŠ‚ç‚¹ç»“æ„ä½“æ•°ç»„
+% ¶¨Òå UE ½á¹¹Ìå
+UE = struct(...
+    'id',num2cell(1:UE_num),...
+    'point', [0,0], ...
+    'sender_id',[],...
+    'energy_received', 0.0 , ...
+    'packetlength_receiver',0 ...
+    );
+% ³õÊ¼»¯ WiFi ºÍ LTE ½Úµã½á¹¹ÌåÊı×é
 % function [Struct] = Set_Point(Struct, centerPoint ,area,start_id)
-WiFi_centerPoint.x = 0.0;
-WiFi_centerPoint.y = 0.0;
-LTE_centerPoint.x = 100.0;
-LTE_centerPoint.y = 100.0;
-WiFi_area.width = 10;
-WiFi_area.length = 10;
-LTE_area.width = 10;
-LTE_area.length = 10;
+WiFi_leftupPoint.x = 0.0;
+WiFi_leftupPoint.y = 0.0;
+LTE_leftupPoint.x = 10.0;
+LTE_leftupPoint.y = 10.0;
+UE_centerPoint.x = 5.0;
+UE_centerPoint.y = 5.0;
+UE_area.width = 4.0;
+UE_area.length = 4.0;
+WiFi_area.divx = 20;
+WiFi_area.divy = 20;
+LTE_area.divx = 20;
+LTE_area.divy = 20;
+% ½øĞĞ¸ñ×´Èöµã
+[WiFi] = Set_Grid_Point(WiFi,WiFi_area,WiFi_leftupPoint,0,WiFi_type);
+[LTE] = Set_Grid_Point(LTE,LTE_area,LTE_leftupPoint,length(WiFi),LTE_type);
+[UE] = Set_Rnd_Point(UE, UE_centerPoint ,UE_area,0 );
 
-[WiFi] = Set_Point(WiFi,WiFi_centerPoint,WiFi_area,0);
-[LTE] = Set_Point(LTE,LTE_centerPoint,LTE_area,0);
-
-% function Display_Struct(Struct,startIndex,count,varargin)
-
-% è®¾ç½®ä¸šåŠ¡æ•°æ®åŒ…ï¼Œé€‰å–ç›‘å¬èŠ‚ç‚¹
-[WiFi] = Set_Packet(WiFi,2,1);
-[LTE] = Set_Packet(LTE,1,1);
-
-Display_Struct(WiFi,1,WiFi_num,'listen_enable','packet_length','waitQuene','detaT');
-Display_Struct(LTE,1,LTE_num,'listen_enable','packet_length','waitQuene','detaT');
-
-for i=1:Loop
-
+% ³õÊ¼»¯ĞÅµÀ
+[Channel] = Set_Channel(Channel);
+% Á¬½Ó·¢ËÍ¶ËºÍ½ÓÊÕ¶Ë
+UE_reciver = randperm(length(UE),2);
+WiFi_reciver = zeros(1,length(WiFi));
+WiFi_reciver(randperm(length(WiFi),1)) = UE_reciver(1);
+LTE_reciver = zeros(1,length(LTE));
+LTE_reciver(randperm(length(LTE),1)) = UE_reciver(2);
+[UE,Channel,WiFi,LTE] = Dispatch_Stream(UE,Channel,WiFi,WiFi_reciver,LTE,LTE_reciver);
+% Show_Point(0,WiFi,LTE,UE);
+% ¼ÆËãÂ·Ëğ
+Path_Loss = Pathloss(UE,Channel,WiFi,LTE);
+% ÉèÖÃÒµÎñÊı¾İ°ü£¬Ñ¡È¡¼àÌı½Úµã
+% Start figure
+if View
+    Screen = get(0,'ScreenSize');
+    ScreenSize.width = Screen(3);
+    ScreenSize.height = Screen(4);
+    main_handler = figure('Color',[0,0.5,0.5],'Position',[ScreenSize.width/15,ScreenSize.height/15,ScreenSize.width*7/8,ScreenSize.height*7/8], ...
+        'Name','LTE-U','NumberTitle','off','MenuBar','none'); 
+    
+    Node = [WiFi LTE];
+    axes_Node_handler = axes('Parent',main_handler,'Position',[0.05,0.1,0.7,0.8]);
+    axes_Loop_handler = axes('Parent',main_handler,'Position',[0.05,0.025,0.7,0.04]);
+    axes_Channel_handler = axes('Parent',main_handler,'Position',[0.775,0.5,0.2,0.4]);
+    
+    ui_togglebutton_handler = uicontrol(main_handler,'Style','togglebutton','Units','normalized','String','Pause', ...
+        'Position',[0.8,0.025,0.05,0.05],'BackgroundColor',[0,0.5,0.5],'Callback',@ui_toggle);
+    ui_buttoncancel_handler = uicontrol(main_handler,'Style','pushbutton','Units','normalized','String','Exit', ...
+        'Position',[0.9,0.025,0.05,0.05],'BackgroundColor',[0,0.5,0.5],'Callback',@ui_button);
+    
+    Node_bar_position = [1:length(Node)];
+    Node_total_date = [];
+    for i=1:length(Node)
+        Node_total_date(i) = Node(1,i).total_date(1)*10^9 + Node(1,i).total_date(2)*10^7 + Node(1,i).total_date(3);
+    end
+    % Node_total_date  ÏÔÊ¾µ¥Î»Îª Kbit ¹Ê³ËÒÔ 10^(-3)
+    Node_bar_group = [Node_total_date*10^(-3) ; Node.detaT;Node.CCA;Node.send_enable;Node.LBT_enable];
+    Node_bar_group =Node_bar_group';
+    Node_bar_handler = bar(axes_Node_handler,Node_bar_position,Node_bar_group,'EraseMode','xor');
+    Node_legend_handler = legend(Node_bar_handler,'Location','NorthEast','total date','detaT','CCA','send enable','LBT');
+    
+    Loop_barh_handler = barh(axes_Loop_handler,100,'EraseMode','xor','BarWidth',1,'FaceColor',[0,0.5,0.5]);
+    set(axes_Loop_handler,'XLim',[0 Loop],'XTick', [],'YTick', [],'ZTick',[]);
+  
+    Channel_bar_position = [1:length(Channel)];
+    Channel_send_queue = [ones(1,length(Channel))];
+    Channel_crash_queue = [ones(1,length(Channel))];
+    Channel_bar_group = [Channel_send_queue;Channel_crash_queue];
+    Channel_bar_group = Channel_bar_group';
+    Channel_bar_handler = bar(axes_Channel_handler,Channel_bar_position,Channel_bar_group,'EraseMode','xor','BarWidth',0.8,'Horizontal','on');
+    set(axes_Channel_handler,'YDir','reverse');
+    Channel_legend_handler =  legend(Channel_bar_handler,'send queue','crash queue','Location','NorthEast');
+    Channel_legend_position =  get(axes_Channel_handler,'Position');
+    set(Channel_legend_handler,'Position',[Channel_legend_position(1),Channel_legend_position(2)-0.1,0.1,0.05]);
 end
+% END OF figure
+Timer_Point_Start = datestr(clock);
+for i=1:Loop
+    [Channel,WiFi,LTE] = Set_Packet(Channel,deta_Time,WiFi_Rate,Loop_slip,50,WiFi,LTE);
+    % DFS
+    [Channel,WiFi,LTE] = listen(Channel,WiFi,LTE);
+    % ´¦Àí»æÍ¼ºÍÍË³ö³ÌĞò
+    if View
+        if mod(i,View_deta) == 0
+            Parent_who = get(0,'children');
+            Node = [WiFi LTE];
+            if ~isempty(Parent_who)
+                Display_status(Node,Node_bar_handler,i+(mod(Loop,View_deta)),...
+                    Loop_barh_handler,Channel,Channel_bar_handler,axes_Channel_handler);
+            else
+                break;
+            end
+        end
+    end
+    if mod(i,ceil(Loop*0.1)) == 0
+        disp([num2str(ceil((i/Loop)*100))  '%']);
+    end
+%     [WiFi,LTE] = Comopute_SNR(UE,Path_Loss,WiFi,LTE);
+    [Channel,UE,WiFi,LTE] = Send_Packet(Channel,UE,WiFi,LTE);
+end
+Timer_Point_End = datestr(clock);
+
+% Data form transfer
+
+
+fileName = WriteStruct(1,'LTE_U',['UE'  ' Start '  Timer_Point_Start ' End ' Timer_Point_End],[WiFi LTE],...
+    'LBT_enable','UE_id','packet_bit','total_date','total_input');
+WriteResult(0,fileName,'',...
+    'Path_Loss',Path_Loss,...
+    'UE ID',[UE.id],'UE Position',[UE.point],'UE Throuput Mbit',[UE.packetlength_receiver]*10^(-6));
+% WriteStruct('LTE_U',[WiFi LTE]);
 end
 

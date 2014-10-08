@@ -1,9 +1,9 @@
-function Display_Struct(Struct,startIndex,count,varargin)
-% è¯¥å‡½æ•°ç”¨äºæ˜¾ç¤ºç»“æ„ä½“æ•°ç»„çš„åŸŸå€¼ï¼Œæ”¯æŒå¤šåŸŸè¾“å…¥
+function Display(Struct,startIndex,count,varargin)
+% ¸Ãº¯ÊıÓÃÓÚÏÔÊ¾½á¹¹ÌåÊı×éµÄÓòÖµ£¬Ö§³Ö¶àÓòÊäÈë
 
-% struct è¦æ˜¾ç¤ºçš„ç»“æ„ä½“æ•°ç»„
-% startindex å¼€å§‹çš„ä¸‹æ ‡å€¼
-% count æ˜¾ç¤ºçš„æ€»ä¸ªæ•°
+% struct ÒªÏÔÊ¾µÄ½á¹¹ÌåÊı×é
+% startindex ¿ªÊ¼µÄÏÂ±êÖµ
+% count ÏÔÊ¾µÄ×Ü¸öÊı
 
 if ~isstruct(Struct)
     error('Display_Struct error :The first value must be struct! please check again!');
